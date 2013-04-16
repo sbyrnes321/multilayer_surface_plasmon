@@ -1,0 +1,8 @@
+*.aux
+*.log
+*.synctex.gz
+*.pyc
+*~
+*.zip
+multilayer_surface_plasmon.egg-info/*
+dist/*

@@ -1,0 +1,57 @@
+<!DOCTYPE HTML PUBLIC "-//W3C//DTD HTML 4.01 Transitional//EN"
+   "http://www.w3.org/TR/html4/loose.dtd">
+<html>
+
+<head>
+<meta http-equiv="Content-Type" content="text/html;charset=utf-8" >
+<title>Documentation for multilayer_surface_plasmon</title>
+</head>
+
+<body>
+<h1>Documentation for multilayer_surface_plasmon</h1>
+
+<p>Download the software at <a href="http://pypi.python.org/pypi/multilayer_surface_plasmon">http://pypi.python.org/pypi/multilayer_surface_plasmon</a></p>
+
+<p>Written by Steve Byrnes, 2013 (<a href="http://sjbyrnes.com">http://sjbyrnes.com</a>)</p> 
+
+<p>Software is released under MIT license.</p>
+
+<h3>Overview</h3>
+
+<p>This is a program written in Python / NumPy that calculates surface-plasmon-polariton (SPP) modes in planar structures of any number of layers, from two layers (like the interface between air and an infinitely-thick metal), to three layers (like a metal-insulator-metal or insulator-metal-insulator thin-film structure), to N layers.</p>
+
+<p>Each layer is allowed to be anisotropic and/or magnetic. So each material has three parameters: In-plane permittivity (ε<sub>x</sub>), an out-of-plane permittivity (ε<sub>z</sub>), and in-plane permeability (μ<sub>y</sub>) [where the wave travels in the x-direction and the layers are parallel to the x-y plane].</p>
+
+<p>Please do not hesitate to <a href="http://sjbyrnes.com">email me</a> with suggestions or corrections. If you use this program for a scientific publication, I would be grateful if you put a link to this page in a citation, and also tell me.</p>
+
+<h3>Package setup and installation</h3>
+
+<p>All the code is a single python module. (Written in Python 2.7, but as far as I can tell it should be compatible with Python 3 also. Please <a href="http://sjbyrnes.com">email me</a> if you have tried.) It requires numpy and matplotlib. The module requires no setup or compilation, so you can just download it and use it. Or, if you prefer, run</p>
+<pre>pip install multilayer_surface_plasmon</pre>
+<p>to automatically download it into the default folder.</p>
+
+<h3>Formulas and derivations</h3>
+
+For formulas and derivations, <a href="Multilayer_anisotropic_SPP.pdf">SEE THIS PDF</a> (<a href="Multilayer_anisotropic_SPP.tex">LaTeX source code</a>). A journal paper on this topic is <a href="http://dx.doi.org/10.1016/j.optcom.2008.09.043">T.J. Davis, 2009, <i>Surface plasmon modes in multi-layer thin-films</i></a>. It doesn't discuss anisotropic or magnetic materials, so it's slightly less general. I didn't directly use formulas from this paper, but I did double-check my program's output against the paper (see below).
+
+<h3>What's in the module?</h3>
+
+<p>The functions are all described with docstrings, so if you read the source code you'll hopefully see what's going on. (There is no other documentation besides this page.)</p>
+
+<p>The examples <code>example1()</code> and <code>example2()</code> are good places to start: They show most of the features you're likely to use.</p>
+
+<p>The test <code>test_davis()</code> is worth running. It is supposed to reproduce the example in <a href="http://dx.doi.org/10.1016/j.optcom.2008.09.043">T.J. Davis, 2009, <i>Surface plasmon modes in multi-layer thin-films</i></a>, a seven-layer structure. When I analyzed the structure, my program found all the modes listed in the paper's table, with about 1-part-in-10,000 accuracy in k<sub>x</sub> for each, which is about as good as possible (given how many digits Davis wrote down).</p>
+
+<p>Here is the plot, which is consistent with Fig. 1b in the paper:</p>
+<img src="davis_img.png" alt="Image from test_davis()" width="40%"> 
+
+<p>and here are the modes, consistent with Fig. 2a in the paper:</p>
+<img src="davis_mode1.png" alt="Mode 1 image from test_davis()" width="20%"> 
+<img src="davis_mode2.png" alt="Mode 2 image from test_davis()" width="20%"> 
+<img src="davis_mode3.png" alt="Mode 3 image from test_davis()" width="20%"> 
+<img src="davis_mode4.png" alt="Mode 4 image from test_davis()" width="20%"> 
+<img src="davis_mode5.png" alt="Mode 5 image from test_davis()" width="20%"> 
+<img src="davis_mode6.png" alt="Mode 6 image from test_davis()" width="20%"> 
+
+</body></html>
+

@@ -1,0 +1,171 @@
+\documentclass[12pt]{article}
+\usepackage{fullpage}
+\usepackage{graphicx}
+\usepackage{amsfonts}
+\usepackage{amssymb}
+\usepackage{amsmath}
+\usepackage{amsthm}
+\usepackage{amsopn}
+\usepackage{fancyhdr}
+\usepackage{url}
+
+%\usepackage[margin=15pt,font=small,labelfont=bf,labelsep=endash]{caption} %caption has different margins and font.
+
+%\renewcommand{\headheight}{30pt}
+%\renewcommand{\headsep}{10pt}
+%\setlength\parskip{5pt}
+
+%TYPESETTING
+\newcommand{\smat}{\left( \begin{matrix}} %start matrix
+\newcommand{\emat}{\end{matrix} \right)} %end matrix
+
+\newcommand{\bea}{\begin{eqnarray*}} %begin unnumbered equation array
+\newcommand{\eea}{\end{eqnarray*}} %end unnumbered equation array
+
+\newcommand{\beq}{\begin{equation}} %begin numbered equation that I won't be referring back to
+\newcommand{\be}[1]{\begin{equation}\label{#1}} %begin numbered equation with a label so I can refer back to it
+\newcommand{\ee}{\end{equation}} %end numbered equation
+
+\newcommand{\bskip}{\bigskip\noindent} %new non-indented paragraph, spaced from previous
+
+\newcommand{\stack}[2]{\genfrac{}{}{0pt}{}{#1}{#2}}
+
+%FORMULA MACROS
+\newcommand{\avg}[1]{\left\langle #1 \right\rangle}
+\renewcommand{\(}{\left(}
+\renewcommand{\)}{\right)}
+%\renewcommand{\[}{\left[}
+%\renewcommand{\]}{\right]}
+
+%SYMBOLS
+\newcommand{\la}{\langle}
+\newcommand{\ra}{\rangle}
+\newcommand{\rar}{\rightarrow}
+\newcommand{\ol}{\overline}
+\newcommand{\ul}{\underline}
+%\renewcommand{\dag}{\dagger}
+\newcommand{\dint}{\int \!\! \int} %double integral
+\newcommand{\tint}{\int \!\! \int \!\! \int} %triple integral
+\newcommand{\na}{\nabla} %gradient symbol is called "nabla"
+
+%OPERATORS
+\newcommand{\ip}[2]{\left\langle \left. #1 \vphantom{#2} \right| #2 \right\rangle} %inner product, with perfect delimiter sizes.
+\newcommand{\bra}[1]{\left\langle #1 \right|} %bra
+\newcommand{\ket}[1]{\left| #1 \right\rangle} %ket
+
+\renewcommand{\Re}{\operatorname{Re}}
+\renewcommand{\Im}{\operatorname{Im}}
+
+%NON-GREEK CHARACTERS
+\newcommand{\E}{{\mathbf{E}}}
+%\renewcommand{\P}{{\mathbf{P}}}
+\newcommand{\D}{{\mathbf{D}}}
+\newcommand{\J}{{\mathbf{J}}}
+%\renewcommand{\H}{{\mathbf{H}}}
+%\renewcommand{\S}{{\mathbf{S}}}
+\newcommand{\hx}{\hat{\mathbf{x}}}
+\newcommand{\hz}{\hat{\mathbf{z}}}
+
+%GREEK CHARACTERS
+\newcommand{\e}{\epsilon}
+
+\pagestyle{fancy}
+
+\lhead{Steven Byrnes, 2013} \chead{} \rhead{\url{http://pythonhosted.org/multilayer_surface_plasmon/}}
+\lfoot{} \cfoot{\thepage} \rfoot{}
+
+\renewcommand{\headheight}{30pt}
+
+\begin{document}
+
+\vspace*{0.3cm}
+{\Large Formulas for \tt{multilayer\_surface\_plasmon}}
+
+\section{Background}
+
+The layers are parallel to the $x-y$ plane. ``Up'' is defined as the direction of increasing $z$. I am calculating SPPs propagating along the $x$-axis, and uniform in the $y$-direction ($k_y = 0$). The $N$ layers are numbered $0,1,\ldots,(N-1)$, where layers $0$ and $N-1$ are infinitely thick. Layer 0 is on the bottom ($z \ll 0$) and layer $(N-1)$ is on top ($z \gg 0$). Layer $m$ has (AC) permittivity $\e_{xm}$ in the $x$-direction and $\e_{zm}$ in the $z$-direction, and likewise permeability $\mu_{ym}$. (Although we're not assuming the permittivity and permeability are isotropic, we \emph{are} assuming that the off-diagonal elements like $\e_{xz}$ are zero.)
+
+This whole document is in SI units. The permeabilities and permittivities are unitless (relative to $\e_0$ or $\mu_0$), except for $\e_0$ and $\mu_0$ themselves. All wavenumbers and wavevectors are angular wavenumbers and angular wavevectors.
+
+\section{Formulas}
+
+$k_x$ is the complex in-plane wavevector. We don't know a priori what it is; we need to figure that out.
+
+The wavevectors $k_{zm}$ are defined in terms of $k_x$ by:
+$$k_{zm} = \pm \sqrt{\omega^2 \mu_{ym} \e_{xm} / c^2 - (\e_{xm} / \e_{zm}) k_x^2} \;\; (\text{choose the root with nonnegative imaginary part})$$
+[What if $k_{zm}$ is real? Then choose one arbitrarily, it doesn't matter. The only place where this would matter is the semi-infinite layers, in which case $k_{zm}$ should never be real or else the wave is not confined.]
+
+When I write down a formula for $\vec{E}(z)$ or $\vec{H}(z)$, it is implicit that you should multiply it by $e^{i k_x x - i \omega t}$ and then take the real part.
+
+I'll base the discussion on mainly around the $H$ field, because it's a scalar (points in the $y$-direction), unlike the electric field which has two components. I may occasionally use $H(z)$ as a synonym of $H_y(z)$. Layer $m$ has:
+$$H_y(z) = H_{m\uparrow} e^{i k_{zm} (z-z_{\text{bottom of m}})} + H_{m\downarrow} e^{i k_{zm} (z_{\text{top of m}} - z)}$$
+$$E_x(z) = E_{xm\uparrow} e^{i k_{zm} (z-z_{\text{bottom of m}})} + E_{xm\downarrow} e^{i k_{zm} (z_{\text{top of m}} - z)}$$
+$$E_z(z) = E_{zm\uparrow} e^{i k_{zm} (z-z_{\text{bottom of m}})} + E_{zm\downarrow} e^{i k_{zm} (z_{\text{top of m}} - z)}$$
+where
+$$E_{xm\uparrow} = H_{m\uparrow} k_{zm} / (\omega \e_{xm} \e_0) \;\;\; , \;\;\; E_{xm\downarrow} = -H_{m\downarrow} k_{zm} / (\omega \e_{xm} \e_0)$$
+$$E_{zm\uparrow} = -H_{m\uparrow} k_x / (\omega \e_{zm} \e_0) \;\;\; , \;\;\; E_{zm\downarrow} = -H_{m\downarrow} k_x / (\omega \e_{zm} \e_0)$$
+(except that $X_{m\uparrow}=0$ in layer 0 (which has no bottom) and $X_{m\downarrow}=0$ in layer $(N-1)$ (which has no top)). $X_{m\uparrow}$ describes the component that decays to 0 as $z$ becomes more positive, while $X_{m\downarrow}$ describes the component that decays to 0 as $z$ becomes more negative.
+
+\ul{Check Faraday's law:}
+$$-i\omega (\mu_y \mu_0 H) = \partial_t B \stackrel{?}{=} -\nabla \times E \;\; \rightarrow \;\; H \stackrel{?}{=} (-i/\mu_0\mu_y\omega)\nabla \times E$$
+$$H_y \stackrel{?}{=} \frac{-i}{\mu_0\mu_{ym}\omega} \(\partial_z E_x - \partial_x E_z\) = \frac{H_{m\uparrow}e^{i k_{zm} (z-z_{\text{bottom of m}})}}{\mu_0 \mu_{ym} \omega^2 \e_0}(\frac{k_{zm}^2}{\e_{xm}} + \frac{k_x^2}{\e_{zm}}) + \frac{H_{m\downarrow} e^{i k_{zm} (z_{\text{top of m}} - z)}}{\mu_0\mu_{ym}\omega^2\e_0}(\frac{k_{zm}^2}{\e_{xm}} + \frac{k_x^2}{\e_{zm}}) $$
+It works!!
+
+\ul{Check Ampere's law:}
+$$\nabla \times H \stackrel{?}{=} -i \omega (\e \e_0) E \;\; \rightarrow \;\; E \stackrel{?}{=} (i/(\omega \e \e_0)) \nabla\times H$$
+$$E_z \stackrel{?}{=} \frac{i}{\omega \e_{zm} \e_0} \partial_x H_y = \frac{i}{\omega \e_{zm} \e_0} \left( i k_x H_{m\uparrow} e^{i k_{zm} (z-z_{\text{bottom of m}})} + i k_x H_{m\downarrow} e^{i k_{zm} (z_{\text{top of m}} - z)}\right)$$
+$$E_x \stackrel{?}{=} \frac{-i}{\omega \e_{xm} \e_0} \partial_z H_y = \frac{-i}{\omega \e_{xm} \e_0} \left( i k_{zm} H_{m\uparrow} e^{i k_{zm} (z-z_{\text{bottom of m}})} - i k_{zm} H_{m\downarrow} e^{i k_{zm} (z_{\text{top of m}} - z)}\right)$$
+It works!!
+
+\ul{Check Gauss's law:}
+$$\nabla \cdot \vec{D} \stackrel{?}{=} 0 \;\; \rightarrow \;\; \e_x \partial_x E_x + \e_z \partial_z E_z \stackrel{?}{=} 0$$
+$$ 0 \stackrel{?}{=} \( i \e_{xm} k_x E_{xm\uparrow} e^{i k_{zm} (z-z_{\text{bottom of m}})} + i \e_{xm} k_x E_{xm\downarrow} e^{i k_{zm} (z_{\text{top of m}} - z)} \)$$
+$$ + \( i \e_{zm} k_{zm} E_{zm\uparrow} e^{i k_{zm} (z-z_{\text{bottom of m}})} - i \e_{zm} k_{zm} E_{zm\downarrow} e^{i k_{zm} (z_{\text{top of m}} - z)} \)$$
+It works!!
+
+
+\section{Solving strategy}
+
+I \emph{guess} $k_x$. Then calculate all the $k_{zm}$'s. I have $2N-2$ unknowns (all the $H_{m\uparrow}, H_{m\downarrow}$, except $H_{0\downarrow}$ and $H_{N-1,\uparrow}$) and I have $(N-1)$ boundaries, each of which give me two continuity equations ($E_x$ is continuous and $\e_z E_z$ is continuous. I think $H_y$ is continuous too, but I think that's redundant with the other two.) Therefore this is a system of linear equations with a nontrivial solution. There is an associated matrix whose determinant must be zero. I can calculate that determinant for every possible $k_x$, and use that as a figure of merit to home in on the actual solution.
+
+$E_x$ is continuous:
+$$E_{x0\downarrow} = E_{x1\uparrow} + E_{x1\downarrow}e^{i k_{z1} d_1}$$
+$$E_{x1\uparrow} e^{i k_{z1} d_1} + E_{x1\downarrow} = E_{x2\uparrow} + E_{x2\downarrow}e^{i k_{z2} d_2}$$
+$$\cdots$$
+$$E_{x(N-2)\uparrow} e^{i k_{z(N-2)} d_{(N-2)}} + E_{x(N-2)\downarrow} = E_{x(N-1)\uparrow}$$
+
+$\e_z E_z$ is continuous:
+$$\e_{z0}E_{z0\downarrow} = \e_{z1} E_{z1\uparrow} + \e_{z1} E_{z1\downarrow}e^{i k_{z1} d_1}$$
+$$\e_{z1} E_{z1\uparrow} e^{i k_{z1} d_1} + \e_{z1} E_{z1\downarrow} = \e_{z2} E_{z2\uparrow} + \e_{z2} E_{z2\downarrow}e^{i k_{z2} d_2}$$
+$$\cdots$$
+$$\e_{z(N-1)} E_{z(N-2)\uparrow} e^{i k_{z(N-2)} d_{(N-2)}} + \e_{z(N-2)} E_{z(N-2)\downarrow} = \e_{z(N-1)} E_{z(N-1)\uparrow}$$
+
+For brevity, define $\delta_m = e^{i k_{zm} d_m}$.
+
+$$\begin{pmatrix}
+\frac{E_{x0\downarrow}}{H_{0\downarrow}} & -\frac{E_{x1\uparrow}}{H_{1\uparrow}} & -\frac{E_{x1\downarrow}}{H_{1\downarrow}} \delta_1 & 0 & 0 & 0 \\
+0 & \frac{E_{x1\uparrow}}{H_{1\uparrow}} \delta_1 & \frac{E_{x1\downarrow}}{H_{1\downarrow}} & -\frac{E_{x2\uparrow}}{H_{2\uparrow}} & -\frac{E_{x2\downarrow}}{H_{2\downarrow}} \delta_2 & 0 \\
+0 & 0 & 0 & \frac{E_{x2\uparrow}}{H_{2\uparrow}} \delta_2 & \frac{E_{x2\downarrow}}{H_{2\downarrow}} & -\frac{E_{x3\uparrow}}{H_{3\uparrow}} \\ \hline
+\e_{z0}\frac{E_{z0\downarrow}}{H_{0\downarrow}} & -\e_{z1}\frac{E_{z1\uparrow}}{H_{1\uparrow}} & -\e_{z1}\frac{E_{z1\downarrow}}{H_{1\downarrow}} \delta_1 & 0 & 0 & 0 \\
+0 & \e_{z1} \frac{E_{z1\uparrow}}{H_{1\uparrow}} \delta_1 & \e_{z1} \frac{E_{z1\downarrow}}{H_{1\downarrow}} & -\e_{z2} \frac{E_{z2\uparrow}}{H_{2\uparrow}} & -\e_{z2} \frac{E_{z2\downarrow}}{H_{2\downarrow}} \delta_2 & 0 \\
+0 & 0 & 0 & \e_{z2} \frac{E_{z2\uparrow}}{H_{2\uparrow}} \delta_2 & \e_{z2} \frac{E_{z2\downarrow}}{H_{2\downarrow}} & -\e_{z3} \frac{E_{z3\uparrow}}{H_{3\uparrow}}
+\end{pmatrix}
+\begin{pmatrix} H_{0\downarrow} \\ H_{1\uparrow} \\ H_{1\downarrow} \\ H_{2\uparrow} \\ H_{2\downarrow} \\ H_{3\uparrow} \end{pmatrix} = \begin{pmatrix} 0 \\ 0 \\ 0 \\ 0 \\ 0 \\ 0 \end{pmatrix}$$
+(The horizontal line separates the $E_x$ equations from the $E_z$ equations.)
+
+
+\section{Poynting vector}
+
+Time-averaged Poynting vector is (Jackson (6.132)): $S = \frac12 E \times H^*$. The real part of $S$ indicates time-averaged power flow. I am only interested in the $x$-component of $S$, $S_x = -(1/2)E_z H_y^*$.
+
+$$S_x = -(1/2)E_z H_y^* = -(1/2) (\stack{E_{zm\uparrow} e^{i k_{zm} (z-z_{\text{bottom of m}})} \; + \; }{\; + \; E_{zm\downarrow} e^{i k_{zm} (z_{\text{top of m}} - z)}})(\stack{H_{m\uparrow}^* e^{-i k_{zm}^* (z-z_{\text{bottom of m}})} \; + \; }{\; + \; H_{m\downarrow}^* e^{-i k_{zm}^* (z_{\text{top of m}} - z)}})$$
+$$= \frac{-E_{zm\uparrow}H_{m\uparrow}^*}{2}e^{-2 \Im(k_{zm})(z-z_{\text{bottom of m}})} + \frac{-E_{zm\downarrow}H_{m\downarrow}^*}{2}e^{-2 \Im(k_{zm})(z_{\text{top of m}}-z)}$$
+$$ + \frac{-E_{zm\downarrow}H_{m\uparrow}^*}{2} e^{ik_{zm} d_m}e^{-2i\Re(k_{zm})(z-z_{\text{bottom of m}})} + \frac{-E_{zm\uparrow}H_{m\downarrow}^*}{2} e^{ik_{zm} d_m}e^{-2i\Re(k_{zm})(z_{\text{top of m}}-z)}$$
+
+Integrate this to get...
+
+$$\int_{z_{\text{bottom of m}}}^{z_{\text{top of m}}} S_x = \frac{-E_{zm\uparrow}H_{m\uparrow}^*}{4 \Im(k_{zm})}(1-e^{-2\Im(k_{zm})d_m}) + \frac{-E_{zm\downarrow}H_{m\downarrow}^*}{4 \Im(k_{zm})}(1-e^{-2\Im(k_{zm})d_m})$$
+$$ + \frac{-E_{zm\downarrow}H_{m\uparrow}^*}{4i\Re(k_{zm})} e^{i k_{zm} d_m} (1 - e^{-2i\Re(k_{zm})d_m}) + \frac{-E_{zm\uparrow}H_{m\downarrow}^*}{4i \Re(k_{zm})} e^{ik_{zm} d_m}(1 - e^{-2i\Re(k_{zm})d_m})$$
+
+
+\end{document}
