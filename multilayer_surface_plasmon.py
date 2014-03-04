@@ -33,15 +33,17 @@ import numericalunits as nu
 
 def floats_are_equal(a, b, tol=1e-5):
     """
-    Checks whether the floats are equal, to within tol relative error. If so,
-    return true. If not, print both floats and return false. This function also
-    accepts complex inputs. Expected use: "assert floats_are_equal(x,y)"
+    Checks whether a and b (real or complex) are equal, to within tol relative
+    error.
     """
-    if abs(a - b) <= tol * (abs(a) + abs(b)):
-        return True
-    else:
-        print(a, b)
-        return False
+    return abs(a - b) <= tol * (abs(a) + abs(b))
+
+def assert_floats_are_equal(a, b, tol=1e-5):
+    """
+    If a and b are not equal (within tol relative error), then raise an
+    assertion error that displays both a and b. If they are equal, do nothing.
+    """
+    assert floats_are_equal(a, b, tol), (a,b)
 
 def find_all_zeros(min_re, max_re, min_im, max_im, fn,
                    grid_points, iterations, reduction_factor,
@@ -367,7 +369,7 @@ def bc_matrix(params):
     return mat
 
 def find_kx(input_params, search_domain=None, show_progress=False,
-            grid_points=20, iterations=8, reduction_factor=5,
+            grid_points=20, iterations=9, reduction_factor=9,
             plot_full_region=True):
     """
     input_params is a dictionary with the simulation parameters. (ex_list,
@@ -380,7 +382,8 @@ def find_kx(input_params, search_domain=None, show_progress=False,
     
     The following parameters are passed straight into find_all_zeros():
     show_progress, grid_points, iterations, reduction_factor, and
-    plot_full_region. show_progress=True prints diagnostics during search for kx minima.
+    plot_full_region. show_progress=True prints diagnostics during search for
+    kx minima.
     """
     w = input_params['w']
     d_list = input_params['d_list']
@@ -651,11 +654,19 @@ def Sx(z, params, x=0, layer=None):
     Hy_here = Hy(z, params, x=x, layer=layer)
     return -0.5 * Ez_here * Hy_here.conjugate()
 
-def check_mode(params, thorough=True):
+def check_mode(params, thorough=False, tol=1e-5):
     """
     Check that mode is valid. "thorough" mode takes a bit longer, because it
     also checks that the total Poynting vector is consistent with the numerical
-    integral of the local Poynting vector.
+    integral of the local Poynting vector. This should always be the case
+    unless I made an algebra error etc. It's off by default because it often 
+    gives false negatives, in cases where the numerical integration does not
+    converge well.
+    
+    Return True if the mode passes all tests and is therefore a real mode,
+    otherwise return a string saying the first error discovered. Some of these
+    checks should never fail unless there is a stupid coding error ... these
+    are put in as assertions instead of just returning False
     """
     N = len(params['d_list'])
     w = params['w']
@@ -674,12 +685,19 @@ def check_mode(params, thorough=True):
         z = layer_bottom_list[layer_over]
         ez_under = ez_list[layer_under]
         ez_over = ez_list[layer_over]
-        assert floats_are_equal(Ex(z, params, layer=layer_under),
-                                Ex(z, params, layer=layer_over))
-        assert floats_are_equal(ez_under * Ez(z, params, layer=layer_under),
-                                ez_over * Ez(z, params, layer=layer_over))
-        assert floats_are_equal(Hy(z, params, layer=layer_under),
-                                Hy(z, params, layer=layer_over))
+        
+        a = Ex(z, params, layer=layer_under)
+        b = Ex(z, params, layer=layer_over)
+        if not floats_are_equal(a,b,tol):
+            return 'Ex b.c. error @ layer ' + str(layer_under) + ' - ' + str((a,b))
+        a = ez_under * Ez(z, params, layer=layer_under)
+        b = ez_over * Ez(z, params, layer=layer_over)
+        if not floats_are_equal(a,b,tol):
+            return 'Ez b.c. error @ layer ' + str(layer_under) + ' - ' + str((a,b))
+        a = Hy(z, params, layer=layer_under)
+        b = Hy(z, params, layer=layer_over)
+        if not floats_are_equal(a,b,tol):
+            return 'Hy b.c. error @ layer ' + str(layer_under) + ' - ' + str((a,b))
    
     # check a few properties of each layer
     for i in range(N):
@@ -687,15 +705,19 @@ def check_mode(params, thorough=True):
         ez = ez_list[i]
         ex = ex_list[i]
         mu = mu_list[i]
-        assert floats_are_equal(kz**2,
-                                w**2 * mu * ex / nu.c0**2 - kx**2 * ex /ez)
-        if i == 0 or i == N-1:
-            assert kz.imag > 0
-        else:
-            assert kz.imag >= 0
+        assert_floats_are_equal(kz**2,
+                                w**2 * mu * ex / nu.c0**2 - kx**2 * ex /ez,
+                                tol=1e-8)
+        assert kz.imag >= 0
+        
+        if (i == 0 or i == N-1) and kz.imag == 0:
+            return 'kz indicates non-confined wave @ layer ' + str(i)
     
     if thorough:
-        # Check Sx_list against a numerical integration.
+        # Check Sx_list against a numerical integration. This really just tests
+        # whether I made a stupid mistake in calculus or algebra, it should
+        # always pass even for non-modes.
+        
         # Numerical integration expects order-unity integrand, or else the
         # absolute-error criterion can fire before convergence. (A few orders
         # of magnitude away from 1 is OK, but not 20 orders of magnitude.) So
@@ -707,7 +729,6 @@ def check_mode(params, thorough=True):
         scale_factor = max(abs(Sx(0, params, layer=0)),
                            abs(Sx(0, params, layer=1)))
         assert scale_factor != 0
-        
         for i in range(N):
             # Calculate integration limits
             if i != 0:
@@ -719,33 +740,41 @@ def check_mode(params, thorough=True):
             else:
                 upper_z = 20 / abs(kz_list[i].imag)
             
-            integrand_re = lambda z : (Sx(z, params) / scale_factor).real
-            integrand_im = lambda z : (Sx(z, params) / scale_factor).imag
+            integrand_re = lambda z : (Sx(z, params, layer=i) / scale_factor).real
+            integrand_im = lambda z : (Sx(z, params, layer=i) / scale_factor).imag
             Sx_integrated = (scipy.integrate.quad(integrand_re, lower_z, upper_z)[0]
                       + 1j * scipy.integrate.quad(integrand_im, lower_z, upper_z)[0])
             Sx_integrated *= scale_factor
-            assert floats_are_equal(Sx_list[i], Sx_integrated)
-    assert floats_are_equal(Sx_total, sum(Sx_list))
+            assert_floats_are_equal(Sx_list[i], Sx_integrated, tol=1e-5)
+    assert_floats_are_equal(Sx_total, sum(Sx_list), tol=1e-8)
+    
+    # All tests passed!
+    return True
 
-def plot_mode(params, filename_x=None, filename_z=None):
+def plot_mode(params, filename_x=None, filename_z=None, z_range=None):
     """
     params is a dictionary that should include kx, w, kz_list, H_up_list, etc.
     This function plots the mode. Pass a filename_x to save the plot of Ex,
-    and/or filename_z to save the plot of Ez
+    and/or filename_z to save the plot of Ez. z_range = [z_min, z_max] sets
+    the range of the horizontal axis, or z_range=None to use the default.
     """
     kz_list = params['kz_list']
     layer_bottom_list = params['layer_bottom_list']
     N = len(kz_list)
     # Choose a range of z to plot:
-    if N == 2:
-        # For 2 layers, put the boundary in the middle, and show the wave
-        # decaying on both sides
-        z_max = min(4 / abs(kz.imag) for kz in kz_list)
-        z_min = -z_max
+    if z_range is not None:
+        z_min = z_range[0]
+        z_max = z_range[1]
     else:
-        # For >= 3 layers, the layers should take up central half of plot
-        z_max = 1.5 * layer_bottom_list[-1]
-        z_min = -0.5 * layer_bottom_list[-1]
+        if N == 2:
+            # For 2 layers, put the boundary in the middle, and show the wave
+            # decaying on both sides
+            z_max = min(4 / abs(kz.imag) for kz in kz_list)
+            z_min = -z_max
+        else:
+            # For >= 3 layers, the layers should take up central half of plot
+            z_max = 1.5 * layer_bottom_list[-1]
+            z_min = -0.5 * layer_bottom_list[-1]
     # Calculate the data
     zs = np.linspace(z_min, z_max, num=200)
     Exs = np.array([Ex(z, params) for z in zs])
@@ -827,30 +856,30 @@ def test_2_layer():
     params = find_all_params_from_kx(params)
     kzd, kzm = params['kz_list']
     # check that kz_list is correct
-    assert floats_are_equal(kzd**2, (w**2 / nu.c0**2) * ed**2 / (em + ed))
-    assert floats_are_equal(kzm**2, (w**2 / nu.c0**2) * em**2 / (em + ed))
+    assert_floats_are_equal(kzd**2, (w**2 / nu.c0**2) * ed**2 / (em + ed))
+    assert_floats_are_equal(kzm**2, (w**2 / nu.c0**2) * em**2 / (em + ed))
     # check that layer_bottom_list is correct
     assert params['layer_bottom_list'][0] == -inf
     assert params['layer_bottom_list'][1] == 0
     # Check that the boundary condition matrix agrees with hand-calculation
     bc_mat = bc_matrix(params)
     # ...top-left is Ex0down / H0down
-    assert floats_are_equal(bc_mat[0,0], -kzd / (w * ed * nu.eps0))
+    assert_floats_are_equal(bc_mat[0,0], -kzd / (w * ed * nu.eps0))
     # ...top-right is -Ex1up / H1up
-    assert floats_are_equal(bc_mat[0,1], -kzm / (w * em * nu.eps0))
+    assert_floats_are_equal(bc_mat[0,1], -kzm / (w * em * nu.eps0))
     # ...bottom-left is eps0 * Ez0down / H0down
-    assert floats_are_equal(bc_mat[1,0], ed * -theo_kx / (w * ed * nu.eps0))
+    assert_floats_are_equal(bc_mat[1,0], ed * -theo_kx / (w * ed * nu.eps0))
     # ...bottom-right is -eps1 * Ez1up / H1up
-    assert floats_are_equal(bc_mat[1,1], -em * -theo_kx / (w * em * nu.eps0))
+    assert_floats_are_equal(bc_mat[1,1], -em * -theo_kx / (w * em * nu.eps0))
     # Check that one of the eigenvalues is almost zero (compared to the size
     # of the matrix elements).
     eigenvalues = np.linalg.eig(bc_mat)[0]
     assert abs(eigenvalues).min() / abs(bc_mat).max() < 1e-6
     # Check that the mode passes all tests.
-    check_mode(params)
+    assert check_mode(params, thorough=True) is True
     # Check that I can scale the fields and it still passes all tests.
     params_scaled = rescale_fields(1.23+4.56j, params)
-    check_mode(params_scaled)
+    assert check_mode(params_scaled, thorough=True) is True
     
     # Now try my kx-finding algorithm, to see if it finds the right value.
     kx_list = find_kx(input_params)
@@ -858,7 +887,7 @@ def test_2_layer():
           ['(%.7g+%.7gj) rad/um' % (kx.real / nu.um**-1, kx.imag / nu.um**-1)
                                                           for kx in kx_list])
     kx = kx_list[0]
-    assert floats_are_equal(theo_kx, kx)
+    assert_floats_are_equal(theo_kx, kx)
     
     plot_mode(params)
     
@@ -918,7 +947,7 @@ def test_davis():
                       search_domain=[-0.05/nu.nm, 0.05/nu.nm, 0, 0.1/nu.nm],
                       grid_points=20, iterations=10, reduction_factor=9,
                       plot_full_region=True)
-    print('kx_list2 -- ' + str(len(kx_list)) + ' entries...')
+    print('kx_list2 -- ' + str(len(kx_list2)) + ' entries...')
     print(['(%.5g+%.5gj) rad/um' % (kx.real / nu.um**-1, kx.imag / nu.um**-1)
                                                           for kx in kx_list2])
     
@@ -979,9 +1008,12 @@ def example1():
         print('kz in each layer:',
               ['(%.4g+%.4gj) rad/um' % (kz.real / nu.um**-1, kz.imag / nu.um**-1)
                                                 for kz in new_params['kz_list']])
-        try:
-            check_mode(new_params)
-            print('If this message appears, the mode passes all tests!')
+        check_mode_results = check_mode(new_params)
+        if check_mode_results is not True:
+            print('This seems not to be a real mode. Error code:')
+            print(check_mode_results)
+        else:
+            print('The mode passes all tests! Plotting...')
             plot_mode(new_params)
             scale_factor = (5 * nu.nW/nu.um) / new_params['Sx_total']
             scaled_params = rescale_fields(scale_factor, new_params)
@@ -989,11 +1021,6 @@ def example1():
             print('through the surface x=0, 0<y<1um, -inf<z<inf)')
             print('then |Ex(0,0)|=',
                   abs(Ex(0, scaled_params)) / (nu.V/nu.m), 'V/m')
-        except:
-            print('kx =', '(%.4g+%.4gj) rad/um' % (kx.real / nu.um**-1, kx.imag / nu.um**-1),
-                  'seems not to be a real mode (a local minimum '
-                  + 'but not a zero in the error function)')
-    
 
 def example2():
     """
@@ -1022,9 +1049,12 @@ def example2():
         print('kz in each layer:',
               ['(%.4g+%.4gj) rad/um' % (kz.real / nu.um**-1, kz.imag / nu.um**-1)
                                                 for kz in new_params['kz_list']])
-        try:
-            check_mode(new_params)
-            print('If this message appears, the mode passes all tests!')
+        check_mode_results = check_mode(new_params)
+        if check_mode_results is not True:
+            print('This seems not to be a real mode. Error code:')
+            print(check_mode_results)
+        else:
+            print('The mode passes all tests! Plotting...')
             plot_mode(new_params)
             scale_factor = (5 * nu.nW/nu.um) / new_params['Sx_total']
             scaled_params = rescale_fields(scale_factor, new_params)
@@ -1032,7 +1062,3 @@ def example2():
             print('through the surface x=0, 0<y<1um, -inf<z<inf)')
             print('then |Ex(0,0)|=',
                   abs(Ex(0, scaled_params)) / (nu.V/nu.m), 'V/m')
-        except:
-            print('kx =', '(%.4g+%.4gj) rad/um' % (kx.real / nu.um**-1, kx.imag / nu.um**-1),
-                  'seems not to be a real mode (a local minimum '
-                  + 'but not a zero in the error function)')
