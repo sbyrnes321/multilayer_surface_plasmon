@@ -789,7 +789,7 @@ def plot_mode(params, filename_x=None, filename_z=None, z_range=None):
     for i in range(1,N):
         plt.axvline(x=layer_bottom_list[i] / nu.nm, color='k')
     plt.title('Ex profile at time 0 and 1/4 cycle later')
-    plt.xlabel('Position (nm)')
+    plt.xlabel('z position (nm)')
     plt.ylabel('E-field (arbitrary units)')
     if filename_x is not None:
         plt.savefig(filename_x)
@@ -799,7 +799,7 @@ def plot_mode(params, filename_x=None, filename_z=None, z_range=None):
     for i in range(1,N):
         plt.axvline(x=layer_bottom_list[i] / nu.nm, color='k')
     plt.title('Ez profile at time 0 and 1/4 cycle later')
-    plt.xlabel('Position (nm)')
+    plt.xlabel('z position (nm)')
     plt.ylabel('E-field (arbitrary units)')
     if filename_z is not None:
         plt.savefig(filename_z)
