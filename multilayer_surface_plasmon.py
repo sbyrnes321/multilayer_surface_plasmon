@@ -100,9 +100,9 @@ def find_all_zeros(min_re, max_re, min_im, max_im, fn,
             
         def contour_int(z, d_re, d_im):
             """
-            Approximate the contour integral of inv_fn around a point z, using
-            a rectangle of half-width d_re (in real direction) and half-height
-            d_im. This makes 
+            Approximate the contour integral of inverse_fn around a point z,
+            using a rectangle of half-width d_re (in real direction) and
+            half-height d_im. Just a nice plot that makes zeros stand out.
             """
             assert d_re.imag == 0 and d_im.imag == 0 and d_re > 0 and d_im > 0
             below = inverse_fn(z - 1j * d_im)
@@ -583,7 +583,8 @@ def Hy(z, params, x=0, layer=None):
     layer_top = inf if layer == N-1 else params['layer_bottom_list'][layer + 1]
     
     if H_up == 0:
-        # This is to avoid 0 * nan for infinitely-thick top or bottom layers
+        # This is to avoid 0 * nan errors for infinitely-thick top or bottom
+        # layers
         up_term = 0
     else:
         up_term = H_up * cmath.exp(1j * kz * (z - layer_bottom) + 1j * kx * x)
@@ -938,7 +939,7 @@ def test_davis():
               abs(my_kx - davis_kx) / (abs(my_kx) + abs(davis_kx)))
 
     print('---')
-    print('Are the last two modes missing? They were for me. Re-try with a')
+    print('Are the last two modes missing? They were for me. Re-trying with a')
     print('smaller search domain (zoomed towards kx=0). (By the way, ')
     print('using a larger number for grid_points would also work here.)')
     print('---')
