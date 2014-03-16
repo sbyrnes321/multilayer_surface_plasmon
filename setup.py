@@ -10,12 +10,12 @@ descrip = "Calculates surface-plasmon-polariton modes for planar structures."
 
 setup(
     name = "multilayer_surface_plasmon",
-    version = "0.1.1",
+    version = "0.1.2",
     author = "Steven Byrnes",
     author_email = "steven.byrnes@gmail.com",
     description = descrip,
     license = "MIT",
-    keywords = "optics, electromagnetism, surface plasmon, surface plasmon polariton",
+    keywords = "optics, electromagnetism, surface plasmon, surface plasmon polariton, transverse magnetic mode, TM mode",
     url = "http://pythonhosted.org/multilayer_surface_plasmon/",
     py_modules=['multilayer_surface_plasmon'],
     long_description=long_description,
