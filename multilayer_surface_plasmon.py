@@ -973,6 +973,108 @@ def test_davis():
         plt.xlabel('z (nm)')
         plt.ylabel('Hy (arbitrary units)')
 
+def test_SIS():
+    """
+    Test spoof-plasmon / insulator / spoof-plasmon structure calculation
+    against analytical formula in Kats et al, "Spoof plasmon analogue of
+    metal-insulator-metal waveguides", http://dx.doi.org/10.1364/OE.19.014860
+    This tests mu != 1 and epsilon_z != epsilon_x code and formulas
+    """
+    def is_symmetric_mode(beta, k0, g, a_over_d, h):
+        """
+        Eq (7i) of paper
+        beta is what I call kx
+        k0 is vacuum angular wavenumber
+        g is thickness of air layer
+        h is thickness of corrugated layer
+        a_over_d is the fraction of corrugated layer which is air
+        """
+        lhs = ((cmath.sqrt(beta**2 - k0**2) / k0)
+                * cmath.tanh(g/2 * cmath.sqrt(beta**2 - k0**2)))
+        rhs = a_over_d * cmath.tan(k0 * h)
+        return floats_are_equal(lhs, rhs, tol=1e-4)
+
+    def is_antisymmetric_mode(beta, k0, g, a_over_d, h):
+        """
+        Eq (7ii) of paper
+        """
+        lhs = ((cmath.sqrt(beta**2 - k0**2) / k0)
+                / cmath.tanh(g/2 * cmath.sqrt(beta**2 - k0**2)))
+        rhs = a_over_d * cmath.tan(k0 * h)
+        return floats_are_equal(lhs, rhs, tol=1e-4)
+    # Choose some parameters (can be anything, these are from Fig. 3 caption)
+    w = 2 * pi * (4 * nu.THz)
+    h = 50 * nu.um
+    g = 50 * nu.um
+    a_over_d = 0.1
+    
+    # Now run analysis
+    k0 = w / nu.c0
+    d_over_a = a_over_d**-1
+    # epsilon of a PEC (perfect electric conductor) is -infinity, but code
+    # doesn't allow that. Use big value instead...
+    PEC_eps = -1e11
+    params = {'d_list': [inf, h, g, h, inf],
+              'ex_list': [PEC_eps, d_over_a, 1, d_over_a, PEC_eps],
+              'ez_list': [PEC_eps, PEC_eps, 1, PEC_eps, PEC_eps],
+              'mu_list': [1, a_over_d, 1, a_over_d, 1],
+              'w': w}
+    
+    kx_list = find_kx(params, grid_points=30, iterations=11, reduction_factor=14,
+                      plot_full_region=True,
+                      search_domain=[-1e5 * nu.m**-1, 1e5 * nu.m**-1, 0, 1e5 * nu.m**-1])
+                      
+    print('kx_list -- ' + str(len(kx_list)) + ' entries...')
+    print(['(%.5g+%.5gj) rad/um' % (kx.real / nu.um**-1, kx.imag / nu.um**-1)
+                                                           for kx in kx_list])
+    # Here, I'm only interested in solutions on the positive real axis
+    kx_list = [kx for kx in kx_list if abs(kx.real) > 1e5 * abs(kx.imag)]
+    kx_list = [-kx if kx.real < 0 else kx for kx in kx_list]
+    # Delete repeats with tolerance 1e-4
+    kx_list_norepeat = []
+    for kx in kx_list:
+        if not any(floats_are_equal(kx, kx2, tol=1e-4) for kx2 in kx_list_norepeat):
+            kx_list_norepeat.append(kx)
+    kx_list = kx_list_norepeat
+    print('kx_list (cleaned up) -- ' + str(len(kx_list)) + ' entries...')
+    print(['(%.5g+%.5gj) rad/um' % (kx.real / nu.um**-1, kx.imag / nu.um**-1)
+                                                           for kx in kx_list])
+    found_sym_mode = False
+    for kx in kx_list:
+        if is_symmetric_mode(kx, k0, g, a_over_d, h):
+            found_sym_mode = True
+            print('Found symmetric mode! ',
+                  '(%.5g+%.5gj) rad/um' % (kx.real / nu.um**-1, kx.imag / nu.um**-1))
+            params2 = deepcopy(params)
+            params2['kx'] = kx
+            params2 = find_all_params_from_kx(params2)
+            if check_mode(params2) is not True:
+                print('Not a real mode? ... Error code:')
+                print(check_mode(params2))
+            else:
+                plot_mode(params2)
+    assert found_sym_mode
+    found_anti_mode = False
+    for kx in kx_list:
+        if is_antisymmetric_mode(kx, k0, g, a_over_d, h):
+            found_anti_mode = True
+            print('Found antisymmetric mode! ',
+                  '(%.5g+%.5gj) rad/um' % (kx.real / nu.um**-1, kx.imag / nu.um**-1))
+            params2 = deepcopy(params)
+            params2['kx'] = kx
+            params2 = find_all_params_from_kx(params2)
+            if check_mode(params2) is not True:
+                print('Not a real mode? ... Error code:')
+                print(check_mode(params2))
+            else:
+                plot_mode(params2)
+    assert found_anti_mode
+    
+    print('Congratulations, the solver found the correct kx for both the')
+    print('symmetric and antisymmetric mode of the structure, consistent')
+    print('with the analytical formula in the literature.')
+
+
 #########################################################################
 ############################# EXAMPLES ##################################
 #########################################################################
